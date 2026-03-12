@@ -1,26 +1,28 @@
 import asyncio
 
-async def scan_port(ip: str, port: int, timeout: float = 1.0) -> bool:
+async def scan_port(semaphore: asyncio.Semaphore, ip: str, port: int, timeout: float = 1.0) -> bool:
     """
     Asynchronously checks if a port is open.
     """
-    try:
-        conn = asyncio.open_connection(ip, port)
-        reader, writer = await asyncio.wait_for(conn, timeout=timeout)
-        # no error up to this moment -> connection is possible
-        writer.close()
-        await writer.wait_closed()
-        return True
-    except:
-        return False
+    async with semaphore:
+        try:
+            conn = asyncio.open_connection(ip, port)
+            reader, writer = await asyncio.wait_for(conn, timeout=timeout)
+            # no error up to this moment -> connection is possible
+            writer.close()
+            await writer.wait_closed()
+            return True
+        except:
+            return False
 
 async def scan_port_range(ip: str, start_port: int, end_port: int, timeout: float = 1.0):
     """
     Scans a range of ports using asyncio.
     """
     tasks = []
+    sem = asyncio.Semaphore(500)
     for port in range(start_port, end_port + 1):
-        tasks.append(scan_port(ip, port, timeout))
+        tasks.append(scan_port(sem, ip, port, timeout))
     
     results = await asyncio.gather(*tasks) # result is a list of bool values
     

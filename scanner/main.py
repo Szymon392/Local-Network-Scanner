@@ -11,6 +11,8 @@ async def main():
     parser.add_argument("-t", "--timeout", type = float, default = 1.0, help = "connection with port timeout in seconds (default: 1.0)")
     args = parser.parse_args()
 
+    #Validation here
+
     print(f"Scanning on port {args.ip}, range: {args.start} - {args.end}, timeout: {args.timeout}.")
 
     found_ports = await core.scan_port_range(args.ip, args.start, args.end, args.timeout)
