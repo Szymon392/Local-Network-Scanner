@@ -9,18 +9,25 @@ async def main():
     parser.add_argument("-s", "--start", type = int, default = 1, help = "target starting port (default: 1)")
     parser.add_argument("-e", "--end", type = int, default = 1024, help = "target end port (default: 1024)")
     parser.add_argument("-t", "--timeout", type = float, default = 1.0, help = "connection with port timeout in seconds (default: 1.0)")
+    parser.add_argument("-a", "--all", action = "store_true", help = "Scan entire network (not just a single ip)")
     args = parser.parse_args()
 
     #Validation here
 
-    print(f"Scanning on port {args.ip}, range: {args.start} - {args.end}, timeout: {args.timeout}.")
-
-    found_ports = await core.scan_port_range(args.ip, args.start, args.end, args.timeout)
-    
-    if found_ports:
-        print(f"Found open ports: {found_ports} on ip: {args.ip}")
+    if (args.all == True):
+        found_ip__and_ports = await core.scan_network("192.168.50.0/24", 1, 100)
+        print(list(found_ip__and_ports))
     else:
-        print(f"Not found any open ports on ip: {args.ip}")
+
+        print(f"Scanning on port {args.ip}, range: {args.start} - {args.end}, timeout: {args.timeout}.")
+
+        found_ports = await core.scan_port_range(args.ip, args.start, args.end, args.timeout)
+        print(found_ports)
+        
+        if found_ports:
+            print(f"Found open ports: {found_ports} on ip: {args.ip}")
+        else:
+            print(f"Not found any open ports on ip: {args.ip}")
 
 if __name__ == "__main__":
     try:

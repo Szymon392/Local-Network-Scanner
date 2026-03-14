@@ -1,4 +1,5 @@
 import asyncio
+import ipaddress
 
 async def scan_port(semaphore: asyncio.Semaphore, ip: str, port: int, timeout: float = 1.0) -> bool:
     """
@@ -20,7 +21,7 @@ async def scan_port_range(ip: str, start_port: int, end_port: int, timeout: floa
     Scans a range of ports using asyncio.
     """
     tasks = []
-    sem = asyncio.Semaphore(500)
+    sem = asyncio.Semaphore(10)
     for port in range(start_port, end_port + 1):
         tasks.append(scan_port(sem, ip, port, timeout))
     
@@ -32,3 +33,14 @@ async def scan_port_range(ip: str, start_port: int, end_port: int, timeout: floa
             open_ports.append(port)
 
     return open_ports
+
+async def scan_network(network_cidr: str, start_port: int, end_port: int): # 'cidr' -> 192.168.1.0/24
+    network = ipaddress.ip_network(network_cidr, strict=False)
+    tasks = []
+
+    for ip in network.hosts():
+        tasks.append(scan_port_range(str(ip), start_port, end_port))
+    
+    ports = await asyncio.gather(*tasks)
+
+    return zip(network.hosts(), ports)
