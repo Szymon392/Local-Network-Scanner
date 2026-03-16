@@ -34,7 +34,7 @@ async def scan_port_range(ip: str, start_port: int, end_port: int, timeout: floa
 
     return open_ports
 
-async def scan_network(network_cidr: str, start_port: int, end_port: int): # 'cidr' -> 192.168.1.0/24
+async def scan_network(network_cidr: str, start_port: int = 443, end_port: int = 443): # 'cidr' -> 192.168.1.0/24
     network = ipaddress.ip_network(network_cidr, strict=False)
     tasks = []
 

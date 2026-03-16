@@ -1,6 +1,7 @@
 import asyncio
 import argparse
 import core
+import utils
 
 async def main():
     parser = argparse.ArgumentParser(description = "asynchrous local network scanner")
@@ -10,11 +11,20 @@ async def main():
     parser.add_argument("-e", "--end", type = int, default = 1024, help = "target end port (default: 1024)")
     parser.add_argument("-t", "--timeout", type = float, default = 1.0, help = "connection with port timeout in seconds (default: 1.0)")
     parser.add_argument("-a", "--all", action = "store_true", help = "Scan entire network (not just a single ip)")
+    parser.add_argument("-d", "--default", action = "store_true", help = "Starts scanning on default settings")
     args = parser.parse_args()
 
     #Validation here
-
-    if (args.all == True):
+    if (args.default == True):
+        """
+        'Default' setting makes the most efficient way to scan the entire network; works in 3 steps:
+        1) scans every host on some port (port number doesnt matter) -> it fills ARP table
+        2) 
+        """
+        await core.scan_network("192.168.50.0/24")
+        live_hosts = await utils.get_live_hosts_from_arp("192.168.50.0")
+        print(live_hosts)
+    elif (args.all == True):
         found_ip__and_ports = await core.scan_network("192.168.50.0/24", 1, 100)
         print(list(found_ip__and_ports))
     else:
