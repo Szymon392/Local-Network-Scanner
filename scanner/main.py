@@ -15,17 +15,19 @@ async def main():
     args = parser.parse_args()
 
     #Validation here
+
+    network_cidr = await utils.get_network_cidr()
     if (args.default == True):
         """
         'Default' setting makes the most efficient way to scan the entire network; works in 3 steps:
         1) scans every host on some port (port number doesnt matter) -> it fills ARP table
-        2) 
+        2) alive hosts list is taken from ARP table
         """
-        await core.scan_network("192.168.50.0/24")
-        live_hosts = await utils.get_live_hosts_from_arp("192.168.50.0")
+        await core.scan_network(str(network_cidr))
+        live_hosts = await utils.get_live_hosts_from_arp(network_cidr)
         print(live_hosts)
     elif (args.all == True):
-        found_ip__and_ports = await core.scan_network("192.168.50.0/24", 1, 100)
+        found_ip__and_ports = await core.scan_network(str(network_cidr), 1, 100)
         print(list(found_ip__and_ports))
     else:
 
