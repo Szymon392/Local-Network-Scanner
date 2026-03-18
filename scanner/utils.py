@@ -2,7 +2,10 @@ import subprocess
 import re
 import ipaddress
 import socket
-async def get_live_hosts_from_arp(network_cidr: ipaddress.IPv4Network) -> list:
+
+from models import TargetHost
+
+async def get_live_hosts_from_arp(network_cidr: ipaddress.IPv4Network) -> list[TargetHost]:
 
     """
     - read information from ARP table
@@ -17,12 +20,13 @@ async def get_live_hosts_from_arp(network_cidr: ipaddress.IPv4Network) -> list:
         return[]
     
     live_hosts = []
-    pattern = re.compile(r"([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+).*?([0-9a-fA-F\-]{17})")
+    ip_pattern = re.compile(r"([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+).*?([0-9a-fA-F\-]{17})")
     for line in result.stdout.splitlines():
-        match = pattern.search(line)
+        match = ip_pattern.search(line)
         if match:
             try:
                 ip_str = match.group(1)
+                mac_str = match.group(2)
                 ip_object = ipaddress.ip_address(ip_str)
 
                 if not ip_object in network_cidr:
@@ -30,13 +34,12 @@ async def get_live_hosts_from_arp(network_cidr: ipaddress.IPv4Network) -> list:
 
                 if ip_object == network_cidr.network_address or ip_object == network_cidr.broadcast_address:
                         continue
-                
-                live_hosts.append(ip_str)
+                live_hosts.append(TargetHost(ip_str, mac_str))
 
             except ValueError:
                 continue
     
-    return list(set(live_hosts))
+    return live_hosts
 
 async def get_network_cidr() -> ipaddress.IPv4Network:
     """
