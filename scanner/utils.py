@@ -54,7 +54,7 @@ async def get_network_cidr() -> ipaddress.IPv4Network:
             )
             prefix_length = result.stdout.strip() 
             if not prefix_length:
-                prefix_length = "24"
+                prefix_length = "24" # 99% of home networks
             
             network_cidr = ipaddress.IPv4Network(f"{my_ip}/{prefix_length}", strict = False)
             return network_cidr

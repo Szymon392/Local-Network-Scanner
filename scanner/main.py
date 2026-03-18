@@ -17,23 +17,27 @@ async def main():
     #Validation here
 
     network_cidr = await utils.get_network_cidr()
+    scanner = core.CoreNetworkScanner(host_limit = 50, port_limit = 20, timeout = args.timeout)
+
     if (args.default == True):
         """
         'Default' setting makes the most efficient way to scan the entire network; works in 3 steps:
         1) scans every host on some port (port number doesnt matter) -> it fills ARP table
         2) alive hosts list is taken from ARP table
         """
-        await core.scan_network(str(network_cidr))
+        await scanner.scan_network(network_cidr)
         live_hosts = await utils.get_live_hosts_from_arp(network_cidr)
         print(live_hosts)
+
     elif (args.all == True):
-        found_ip__and_ports = await core.scan_network(str(network_cidr), 1, 100)
+        found_ip__and_ports = await scanner.scan_network(str(network_cidr), 1, 100)
         print(list(found_ip__and_ports))
+
     else:
 
         print(f"Scanning on port {args.ip}, range: {args.start} - {args.end}, timeout: {args.timeout}.")
 
-        found_ports = await core.scan_port_range(args.ip, args.start, args.end, args.timeout)
+        found_ports = await scanner.scan_port_range(args.ip, args.start, args.end)
         print(found_ports)
         
         if found_ports:
