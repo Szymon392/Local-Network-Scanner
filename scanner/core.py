@@ -21,7 +21,7 @@ async def scan_port_range(ip: str, start_port: int, end_port: int, timeout: floa
     Scans a range of ports using asyncio.
     """
     tasks = []
-    sem = asyncio.Semaphore(10)
+    sem = asyncio.Semaphore(20)
     for port in range(start_port, end_port + 1):
         tasks.append(scan_port(sem, ip, port, timeout))
     
@@ -34,12 +34,23 @@ async def scan_port_range(ip: str, start_port: int, end_port: int, timeout: floa
 
     return open_ports
 
-async def scan_network(network_cidr: str, start_port: int = 443, end_port: int = 443): # 'cidr' -> 192.168.1.0/24
+async def scan_network(network_cidr: str, start_port: int = 443, end_port: int = 443):
+    """
+    If a network is large - scanning every host at the same time would be a problem
+    Semaphore in this function limits the number of hosts the program tries to reach at the same time
+    """
     network = ipaddress.ip_network(network_cidr, strict=False)
+
+    host_semaphore = asyncio.Semaphore(50)
+
+    async def scan_host_with_limit(ip : str):
+        async with host_semaphore:
+            return await scan_port_range(ip, start_port, end_port)
+        
     tasks = []
 
     for ip in network.hosts():
-        tasks.append(scan_port_range(str(ip), start_port, end_port))
+        tasks.append(scan_host_with_limit(ip))
     
     ports = await asyncio.gather(*tasks)
 
