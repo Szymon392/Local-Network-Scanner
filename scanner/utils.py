@@ -5,6 +5,26 @@ import socket
 
 from models import TargetHost
 
+MAC_VENDORS = {
+    "e8:9c:25": "Apple, Inc.",
+    "00:1a:2b": "Samsung Electronics",
+    "b8:27:eb": "Raspberry Pi Foundation",
+    "dc:a6:32": "Raspberry Pi Trading",
+    "00:50:56": "VMware, Inc.",
+    "08:00:27": "Oracle VirtualBox",
+    "00:14:22": "Dell Inc.",
+    "f4:06:69": "Intel Corporate",
+    "c0:25:e9": "TP-Link Technologies",
+}
+
+def get_vendor_by_mac(mac_address : str) -> str: # no need for async
+    if not mac_address:
+        return 
+    if len(mac_address) >= 2 and mac_address[1].lower() in ['2', '6', 'a', 'e']:
+        return "randomized"
+    prefix = mac_address[:8]
+    return MAC_VENDORS.get(prefix, "unknowned")
+
 async def get_live_hosts_from_arp(network_cidr: ipaddress.IPv4Network) -> list[TargetHost]:
 
     """
@@ -34,7 +54,7 @@ async def get_live_hosts_from_arp(network_cidr: ipaddress.IPv4Network) -> list[T
 
                 if ip_object == network_cidr.network_address or ip_object == network_cidr.broadcast_address:
                         continue
-                live_hosts.append(TargetHost(ip_str, mac_str))
+                live_hosts.append(TargetHost(ip_str, mac_str, get_vendor_by_mac(mac_str)))
 
             except ValueError:
                 continue
