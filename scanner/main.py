@@ -10,7 +10,6 @@ async def main():
     parser.add_argument("-s", "--start", type = int, default = 1, help = "target starting port (default: 1)")
     parser.add_argument("-e", "--end", type = int, default = 1024, help = "target end port (default: 1024)")
     parser.add_argument("-t", "--timeout", type = float, default = 1.0, help = "connection with port timeout in seconds (default: 1.0)")
-    parser.add_argument("-a", "--all", action = "store_true", help = "Scan entire network (not just a single ip)")
     parser.add_argument("-d", "--default", action = "store_true", help = "Starts scanning on default settings")
     args = parser.parse_args()
 
@@ -24,15 +23,14 @@ async def main():
         'Default' setting makes the most efficient way to scan the entire network; works in 3 steps:
         1) scans every host on some port (port number doesnt matter) -> it fills ARP table
         2) alive hosts list is taken from ARP table
+        3) live hosts are being scanned once again, this time on a specific range of ports (1 to 100 by default)
         """
         await scanner.scan_network(network_cidr)
         live_hosts = await utils.get_live_hosts_from_arp(network_cidr)
         live_hosts = await scanner.scan_live_hosts(live_hosts)
+
         for host in live_hosts:
             print(host)
-    elif (args.all == True):
-        found_ip__and_ports = await scanner.scan_network(str(network_cidr), 1, 100)
-        print(list(found_ip__and_ports))
 
     else:
 

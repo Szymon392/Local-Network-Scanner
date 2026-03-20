@@ -43,24 +43,26 @@ class CoreNetworkScanner:
 
         return open_ports
 
-    async def scan_network(self, network: ipaddress.IPv4Network, start_port: int = 443, end_port: int = 443):
+    async def scan_network(self, network: ipaddress.IPv4Network):
         """
+        This function exists ONLY to fill the ARP table
+
         If a network is large - scanning every host at the same time would be a problem
         Semaphore in this function limits the number of hosts the program tries to reach at the same time
         """
 
         async def scan_host_with_limit(ip : str):
             async with self.host_semaphore:
-                return await self.scan_port_range(ip, start_port, end_port)
+                return await self.scan_port(ip, 443) # port number doesn't matter
             
         tasks = []
 
         for ip in network.hosts():
             tasks.append(scan_host_with_limit(str(ip)))
         
-        ports = await asyncio.gather(*tasks)
+        await asyncio.gather(*tasks)
 
-        return list(zip(network.hosts(), ports))
+        return
     
     async def scan_live_hosts(self, live_hosts : list[TargetHost], start_port: int = 1, end_port : int = 100) -> list[TargetHost]:
         """
