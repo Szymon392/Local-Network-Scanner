@@ -1,6 +1,8 @@
 import asyncio
 import ipaddress
 
+from models import TargetHost
+
 class CoreNetworkScanner:
     def __init__(self, host_limit : int = 50, port_limit : int = 20, timeout: float = 1.0):
         self.timeout = timeout
@@ -59,3 +61,23 @@ class CoreNetworkScanner:
         ports = await asyncio.gather(*tasks)
 
         return list(zip(network.hosts(), ports))
+    
+    async def scan_live_hosts(self, live_hosts : list[TargetHost], start_port: int = 1, end_port : int = 100) -> list[TargetHost]:
+        """
+        function made to scan a range of ports on a specific, live hosts, as scanning all at once would be too much
+        made a wrapper function and used semaphore (the same for this function and scan_netwrok)
+        """
+
+        async def scan_live_hosts_with_limit(ip : str, start_port: int, end_port: int):
+            async with self.host_semaphore:
+                return await self.scan_port_range(ip, start_port, end_port)
+            
+        tasks = []
+        for host in live_hosts:
+            tasks.append(scan_live_hosts_with_limit(host.ip, start_port, end_port))
+        
+        open_ports =  await asyncio.gather(*tasks)
+
+        for i, host in enumerate(live_hosts):
+            host.open_ports = open_ports[i]
+        return live_hosts

@@ -27,8 +27,9 @@ async def main():
         """
         await scanner.scan_network(network_cidr)
         live_hosts = await utils.get_live_hosts_from_arp(network_cidr)
-        print(live_hosts)
-
+        live_hosts = await scanner.scan_live_hosts(live_hosts)
+        for host in live_hosts:
+            print(host)
     elif (args.all == True):
         found_ip__and_ports = await scanner.scan_network(str(network_cidr), 1, 100)
         print(list(found_ip__and_ports))
