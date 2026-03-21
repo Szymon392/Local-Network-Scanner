@@ -23,7 +23,7 @@ def get_vendor_by_mac(mac_address : str) -> str: # no need for async
     if len(mac_address) >= 2 and mac_address[1].lower() in ['2', '6', 'a', 'e']:
         return "randomized"
     prefix = mac_address[:8]
-    return MAC_VENDORS.get(prefix, "unknowned")
+    return MAC_VENDORS.get(prefix, "unknown")
 
 async def get_live_hosts_from_arp(network_cidr: ipaddress.IPv4Network) -> list[TargetHost]:
 

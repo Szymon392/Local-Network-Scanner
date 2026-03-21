@@ -16,7 +16,7 @@ async def main():
     #Validation here
 
     network_cidr = await utils.get_network_cidr()
-    scanner = core.CoreNetworkScanner(host_limit = 50, port_limit = 20, timeout = args.timeout)
+    scanner = core.CoreNetworkScanner(host_limit = 20, port_limit = 50, timeout = args.timeout)
 
     if (args.default == True):
         """
@@ -27,7 +27,7 @@ async def main():
         """
         await scanner.scan_network(network_cidr)
         live_hosts = await utils.get_live_hosts_from_arp(network_cidr)
-        live_hosts = await scanner.scan_live_hosts(live_hosts)
+        live_hosts = await scanner.scan_live_hosts(live_hosts, 1, 1000)
 
         for host in live_hosts:
             print(host)
