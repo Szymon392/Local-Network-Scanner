@@ -3,6 +3,8 @@ import argparse
 import core
 import utils
 
+import time
+
 async def main():
     parser = argparse.ArgumentParser(description = "asynchrous local network scanner")
 
@@ -14,10 +16,8 @@ async def main():
     args = parser.parse_args()
 
     #Validation here
-
     network_cidr = await utils.get_network_cidr()
     scanner = core.CoreNetworkScanner(host_limit = 20, port_limit = 50, timeout = args.timeout)
-
     if (args.default == True):
         """
         'Default' setting makes the most efficient way to scan the entire network; works in 3 steps:
@@ -28,7 +28,6 @@ async def main():
         await scanner.scan_network(network_cidr)
         live_hosts = await utils.get_live_hosts_from_arp(network_cidr)
         live_hosts = await scanner.scan_live_hosts(live_hosts, 1, 1000)
-
         for host in live_hosts:
             print(host)
 

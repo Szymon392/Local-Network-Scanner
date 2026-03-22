@@ -7,32 +7,36 @@ class CoreNetworkScanner:
     def __init__(self, host_limit : int = 20, port_limit : int = 50, timeout: float = 1.0):
         self.timeout = timeout
         self.host_semaphore = asyncio.Semaphore(host_limit)
-        self.port_semaphore = asyncio.Semaphore(port_limit)
+        self.port_limit = port_limit
 
 
     async def scan_port(self, ip: str, port: int) -> bool:
         """
         Asynchronously checks if a port is open.
         """
-        async with self.port_semaphore:
-            try:
-                conn = asyncio.open_connection(ip, port)
-                reader, writer = await asyncio.wait_for(conn, self.timeout)
+        try:
+            conn = asyncio.open_connection(ip, port)
+            reader, writer = await asyncio.wait_for(conn, self.timeout)
 
-                # no error up to this moment -> connection is possible
-                writer.close()
-                await writer.wait_closed()
-                return True
-            except Exception:
-                return False
+            # no error up to this moment -> connection is possible
+            writer.close()
+            await writer.wait_closed()
+            return True
+        except Exception:
+            return False
 
     async def scan_port_range(self, ip: str, start_port: int, end_port: int):
         """
-        Scans a range of ports using asyncio.
+        Scans a range of ports, uses wrapper to be able to limit the number of ports scanned in the same time.
         """
+        port_semaphore = asyncio.Semaphore(self.port_limit)
         tasks = []
+        async def scan_port_with_limit(ip, port):
+            async with port_semaphore:
+                return await self.scan_port(ip, port)
+
         for port in range(start_port, end_port + 1):
-            tasks.append(self.scan_port(ip, port))
+            tasks.append(scan_port_with_limit(ip, port))
         
         results = await asyncio.gather(*tasks) # result is a list of bool values
         
