@@ -5,6 +5,7 @@ class TargetHost:
     ip: str
     mac: str
     vendor: str
+    os: str = ""
     open_ports : list[PortInfo] = field(default_factory = list)
 
     def guess_os(self) -> str:

@@ -29,6 +29,7 @@ async def main():
         live_hosts = await utils.get_live_hosts_from_arp(network_cidr)
         live_hosts = await scanner.scan_live_hosts(live_hosts, 1, 1000)
         for host in live_hosts:
+            host.os = host.guess_os()
             print(host)
 
     else:
