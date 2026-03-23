@@ -5,25 +5,26 @@ import socket
 
 from models import TargetHost
 
-MAC_VENDORS = {
-    "e8:9c:25": "Apple, Inc.",
-    "00:1a:2b": "Samsung Electronics",
-    "b8:27:eb": "Raspberry Pi Foundation",
-    "dc:a6:32": "Raspberry Pi Trading",
-    "00:50:56": "VMware, Inc.",
-    "08:00:27": "Oracle VirtualBox",
-    "00:14:22": "Dell Inc.",
-    "f4:06:69": "Intel Corporate",
-    "c0:25:e9": "TP-Link Technologies",
-}
+from mac_vendor_lookup import AsyncMacLookup
 
-def get_vendor_by_mac(mac_address : str) -> str: # no need for async
+mac_lookup_service = AsyncMacLookup()
+
+async def get_vendor_by_mac(mac_address : str) -> str:
+    """
+    Function uses mac_vendor_lookup function - local-made library was inefficient adn too small,
+    connecting to some API would be time-consuming
+    """
     if not mac_address:
         return 
+    
+    mac_normalized = mac_address.replace("-", ":").lower()
     if len(mac_address) >= 2 and mac_address[1].lower() in ['2', '6', 'a', 'e']:
         return "randomized"
-    prefix = mac_address[:8]
-    return MAC_VENDORS.get(prefix, "unknown")
+    
+    try:
+        return await mac_lookup_service.lookup(mac_normalized)
+    except Exception:
+        return "unknown"
 
 async def get_live_hosts_from_arp(network_cidr: ipaddress.IPv4Network) -> list[TargetHost]:
 
@@ -54,14 +55,14 @@ async def get_live_hosts_from_arp(network_cidr: ipaddress.IPv4Network) -> list[T
 
                 if ip_object == network_cidr.network_address or ip_object == network_cidr.broadcast_address:
                         continue
-                live_hosts.append(TargetHost(ip_str, mac_str, get_vendor_by_mac(mac_str)))
+                live_hosts.append(TargetHost(ip_str, mac_str, await get_vendor_by_mac(mac_str)))
 
             except ValueError:
                 continue
     
     return live_hosts
 
-async def get_network_cidr() -> ipaddress.IPv4Network:
+def get_network_cidr() -> ipaddress.IPv4Network: # subprocess.run inside -> async would not help at all
     """
         - set the connection via UDP (just set not send anything) - it is connectionless but it will be prepared for connection (with proper ip)
         - read an ip from a proper network adapter - this way multiple number of virtual adapters (like from VMWare) is not a problem

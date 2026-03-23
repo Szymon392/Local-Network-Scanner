@@ -16,7 +16,7 @@ async def main():
     args = parser.parse_args()
 
     #Validation here
-    network_cidr = await utils.get_network_cidr()
+    network_cidr = utils.get_network_cidr()
     scanner = core.CoreNetworkScanner(host_limit = 20, port_limit = 50, timeout = args.timeout)
     if (args.default == True):
         """
