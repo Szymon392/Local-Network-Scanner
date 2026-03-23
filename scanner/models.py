@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+import socket
 
 @dataclass
 class TargetHost:
@@ -10,22 +11,35 @@ class TargetHost:
 
     def guess_os(self) -> str:
         port_numbers = {port.number for port in self.open_ports}
-
         if not port_numbers:
-            return "Unknown (not a port open)"
-        
-        if {135, 445}.issubset(port_numbers):
+            return "Unknown (Firewall/Stealth)"
+            
+        if {135, 139, 445} & port_numbers:
             return "Windows"
-        
-        if {22}.issubset(port_numbers):
-            return "Linux / Unix / MacOS"
-        
-        if ({80, 443}.intersection(port_numbers) and len(port_numbers) <= 3):
-            return "Network device"
-        
-        return "unkown"
+            
+        if {22, 111} & port_numbers:
+            return "Linux / Unix"
+            
+        if {62078, 7000} & port_numbers:
+            return "Apple (iOS/macOS)"
+            
+        if {515, 631, 9100} & port_numbers:
+            return "Network Printer"
+            
+        if {53, 80, 443} & port_numbers:
+            return "Network Device / Router"
+            
+        return "Unknown"
 
 @dataclass
 class PortInfo:
     number : int
     banner : str = ""
+    service : str = ""
+
+    def __post_init__(self):
+        if not self.service:
+            try:
+                self.service = socket.getservbyport(self.number, 'tcp'.upper())
+            except OSError:
+                self.service = "UNKNOWN"
