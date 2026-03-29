@@ -20,21 +20,23 @@ async def main():
     scanner = core.CoreNetworkScanner(host_limit = 20, port_limit = 50, timeout = args.timeout)
     if (args.default == True):
         """
-        'Default' setting makes the most efficient way to scan the entire network; works in 3 steps:
+        'Default' setting makes the most efficient way to scan the entire network; works in 4 steps:
         1) scans every host on some port (port number doesnt matter) -> it fills ARP table
         2) alive hosts list is taken from ARP table
         3) live hosts are being scanned once again, this time on a specific range of ports (1 to 100 by default)
+        4) reverse DNS is used to get hosts local names
         """
         await scanner.scan_network(network_cidr)
         live_hosts = await utils.get_live_hosts_from_arp(network_cidr)
         live_hosts = await scanner.scan_live_hosts(live_hosts, 1, 1000)
+        live_hosts = await utils.get_local_name(live_hosts)
         for host in live_hosts:
             host.os = host.guess_os()
             print(host)
 
     else:
 
-        print(f"Scanning on port {args.ip}, range: {args.start} - {args.end}, timeout: {args.timeout}.")
+        print(f"Scanning on ip {args.ip}, range: {args.start} - {args.end}, timeout: {args.timeout}.")
 
         found_ports = await scanner.scan_port_range(args.ip, args.start, args.end)
         print(found_ports)

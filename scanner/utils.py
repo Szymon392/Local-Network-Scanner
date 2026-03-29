@@ -2,6 +2,7 @@ import subprocess
 import re
 import ipaddress
 import socket
+import asyncio
 
 from models import TargetHost
 
@@ -85,3 +86,26 @@ def get_network_cidr() -> ipaddress.IPv4Network: # subprocess.run inside -> asyn
     except Exception as e:
         print("Cannot get a proper network address - it is pre-set: '192.168.50.0/24'")
         return ipaddress.IPv4Network("192.168.50.0/24")
+    
+async def get_local_name(hosts_list : list[TargetHost]) -> list[TargetHost]:
+    """
+    The funcyion uses reverse DNS to get a localname of each host. it asks router using an ip address and receives a response
+    As the 'gethostbyaddr' is not async function '.to_thread' was used.
+    """
+    dns_semaphore = asyncio.Semaphore(50)
+    async def get_local_name_wrapper(dns_semaphore, ip):
+        async with dns_semaphore:
+            try:
+                result =  await asyncio.to_thread(socket.gethostbyaddr, ip)
+                return result[0]
+            except Exception:
+                return "Unknown"
+    tasks = []
+    for host in hosts_list:
+        tasks.append(get_local_name_wrapper(dns_semaphore, host.ip))
+    
+    results = await asyncio.gather(*tasks)
+    for i, host in enumerate(hosts_list):
+        host.local_name = results[i]
+
+    return hosts_list
