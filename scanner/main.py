@@ -39,7 +39,6 @@ async def main():
         print(f"Scanning on ip {args.ip}, range: {args.start} - {args.end}, timeout: {args.timeout}.")
 
         found_ports = await scanner.scan_port_range(args.ip, args.start, args.end)
-        print(found_ports)
         
         if found_ports:
             print(f"Found open ports: {found_ports} on ip: {args.ip}")

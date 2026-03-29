@@ -1,7 +1,7 @@
 import asyncio
 import ipaddress
 
-from models import TargetHost, PortInfo
+from scanner.models import TargetHost, PortInfo
 
 class CoreNetworkScanner:
     def __init__(self, host_limit : int = 20, port_limit : int = 50, timeout: float = 1.0):

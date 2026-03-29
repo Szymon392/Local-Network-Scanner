@@ -4,7 +4,7 @@ import ipaddress
 import socket
 import asyncio
 
-from models import TargetHost
+from scanner.models import TargetHost
 
 from mac_vendor_lookup import AsyncMacLookup
 
