@@ -1,6 +1,5 @@
 from fastapi import FastAPI
-import sys
-import os
+from fastapi.responses import FileResponse
 
 from scanner.models import TargetHost, PortInfo
 from scanner import core
@@ -13,7 +12,7 @@ app = FastAPI(
 
 @app.get("/")
 async def root():
-    return {"message" : "scanner works!"}
+    return FileResponse("frontend/index.html")
 
 @app.get("/api/scan")
 async def scan_network():

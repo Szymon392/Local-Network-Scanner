@@ -5,6 +5,10 @@ import utils
 
 import time
 
+"""
+The file is to be used ONLY when launching scan from CLI - in the case of web usage this file is NOT USED AT aLL
+"""
+
 async def main():
     parser = argparse.ArgumentParser(description = "asynchrous local network scanner")
 
