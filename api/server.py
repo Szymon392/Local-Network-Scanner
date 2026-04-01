@@ -1,9 +1,17 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse
 
 from scanner.models import TargetHost, PortInfo
 from scanner import core
 from scanner import utils
+
+import asyncio
+
+"""
+As it is not the scope of this project to make a very extensive website,
+I only implement the very simple website - server logic.
+However i had to make a websocket to integrate the chat logic between user and an AI.
+"""
 
 app = FastAPI(
     title = "Local Network Scanner API",
@@ -38,3 +46,23 @@ async def scan_network():
     for host in live_hosts:
         host.os = host.guess_os()
     return live_hosts
+
+@app.websocket("/ws/chat")
+async def websocket_chat(websocket: WebSocket):
+    await websocket.accept()
+    
+    try:
+        while True:
+            question = await websocket.receive_text()
+
+
+            # a place for AI integration logic
+            await asyncio.sleep(1.5) 
+            answer = f"Your question is: {question}   For now, no google ADK integration was implemented"
+
+
+
+            await websocket.send_text(answer)
+            
+    except WebSocketDisconnect:
+        pass

@@ -1,4 +1,6 @@
 <!DOCTYPE html>
+<!--As the goal of this project is to implement asyncronous network scanner and integrate it with google ADK I decided to
+to make a minimalistic frontend - despite that the logic of what i had may seem much it's only 'the core'-->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -55,7 +57,7 @@
         </div>
     </div>
 
-    <script>
+<script>
         const statusText = document.getElementById('status');
         const tableBody = document.getElementById('resultsTable');
         const chatSection = document.getElementById('chatSection');
@@ -117,30 +119,42 @@
             }
         };
 
-        askBtn.addEventListener('click', async () => {
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${wsProtocol}//${window.location.host}/ws/chat`;
+        let aiSocket = new WebSocket(wsUrl);
+
+        aiSocket.onmessage = (event) => {
+            const answer = event.data;
+            aiResponse.innerHTML = `<div class="text-blue-400 font-bold text-[10px] uppercase mb-1">AI Analyst:</div><div class="text-slate-300 text-sm">${answer}</div>`;
+            askBtn.disabled = false;
+        };
+
+        aiSocket.onclose = () => {
+            aiResponse.classList.remove('hidden');
+            aiResponse.innerHTML = `<span class="text-red-500 text-xs italic">System disconnected from AI Engine. Refresh page to reconnect.</span>`;
+            askBtn.disabled = true;
+        };
+
+        askBtn.addEventListener('click', () => {
             const question = chatInput.value.trim();
             if (!question) return;
 
-            askBtn.disabled = true;
-            aiResponse.classList.remove('hidden');
-            aiResponse.innerHTML = '<span class="text-blue-400 animate-pulse font-mono text-xs uppercase tracking-widest">Thinking...</span>';
+            if (aiSocket.readyState === WebSocket.OPEN) {
+                askBtn.disabled = true;
+                aiResponse.classList.remove('hidden');
+                aiResponse.innerHTML = '<span class="text-blue-400 animate-pulse font-mono text-xs uppercase tracking-widest">Thinking...</span>';
 
-            try {
-                const response = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ question: question })
-                });
-                
-                if (!response.ok) throw new Error("AI Endpoint error");
-                
-                const data = await response.json();
-                aiResponse.innerHTML = `<div class="text-blue-400 font-bold text-[10px] uppercase mb-1">AI Analyst:</div><div class="text-slate-300 text-sm">${data.answer}</div>`;
-            } catch (error) {
-                aiResponse.innerHTML = `<span class="text-red-500 text-xs italic">Error: Cannot connect to AI Engine.</span>`;
-            } finally {
-                askBtn.disabled = false;
+                aiSocket.send(question);
                 chatInput.value = '';
+            } else {
+                alert("Connection to AI is currently down.");
+            }
+        });
+
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                askBtn.click();
             }
         });
     </script>
