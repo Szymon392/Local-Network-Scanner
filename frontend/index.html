@@ -1,147 +1,32 @@
-<!-- This is a main frontend file, it uses tailwindcss and javascript to make this part of the project quick and simple
- as making frontend is not the scope of the project-->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Network Scanner</title>
+    <title>Scanner - Legal Notice</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-900 text-slate-200 font-sans p-8">
-    <div id="legalModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md transition-opacity duration-500">
+<body class="bg-slate-900 text-slate-200 font-sans min-h-screen flex items-center justify-center p-8">
+
     <div class="bg-slate-800 border border-slate-700 max-w-lg w-full rounded-2xl shadow-2xl p-8 shadow-blue-500/10">
-        <div class="flex items-center gap-4 mb-6">
-            <span class="text-4xl">⚖️</span>
-            <h2 class="text-2xl font-bold text-white">Legal Notice</h2>
+        <div class="flex items-center justify-center gap-4 mb-6">
+            <h2 class="text-2xl font-bold text-white">LEGAL NOTICE</h2>
         </div>
         
         <div class="space-y-4 text-slate-300 text-sm leading-relaxed">
-            <p>
-                Using this tool to scan networks without explicit permission is strictly prohibited and may be <strong>illegal</strong>. 
-            </p>
-            <p class="bg-slate-900/80 p-3 rounded-lg border-l-4 border-amber-500 italic">
+            <p>Using this tool to scan networks without explicit permission is strictly prohibited and may be <strong>illegal</strong>.</p>
+            <p class="bg-slate-900/80 p-3 rounded-lg border-l-4 border-blue-500 italic">
                 This application is for <strong>educational and authorized testing</strong> only.
             </p>
-            <p>
-                By clicking the button below, you confirm that you have the right to scan the current network. The developer is not responsible for any misuse.
-            </p>
+            <p>By clicking the button below, you confirm that you have the right to scan the current network. The developer is not responsible for any misuse.</p>
         </div>
 
         <div class="mt-8">
-            <button id="acceptLegalBtn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition-all active:scale-95 shadow-lg">
+            <a href="scan.html" class="block w-full bg-blue-600 hover:bg-blue-500 text-white text-center font-bold py-4 rounded-xl transition-all active:scale-95 shadow-lg">
                 I understand and I accept
-            </button>
-        </div>
-    </div>
-</div>
-    <div class="max-w-5xl mx-auto">
-        <header class="mb-10 border-b border-slate-700 pb-4">
-            <h1 class="text-4xl font-bold text-blue-500 mb-2">Network Scanner Panel</h1>
-            <p class="text-slate-400">Manage your local network and discover active devices!</p>
-        </header>
-
-        <div class="mb-8 flex items-center gap-4">
-            <button id="scanBtn" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-all active:scale-95">
-                Scan Network
-            </button>
-            <span id="status" class="text-slate-400 italic">Ready</span>
-        </div>
-
-        <div class="bg-slate-800 rounded-xl shadow-2xl overflow-hidden border border-slate-700">
-            <table class="w-full text-left border-collapse">
-                <thead class="bg-slate-700 text-slate-300 text-sm uppercase tracking-wider">
-                    <tr>
-                        <th class="p-4">IP Address</th>
-                        <th class="p-4">MAC Address</th>
-                        <th class="p-4">Vendor</th>
-                        <th class="p-4">Name (DNS)</th>
-                        <th class="p-4">OS / System</th>
-                        <th class="p-4">Open Ports</th>
-                    </tr>
-                </thead>
-                <tbody id="resultsTable" class="divide-y divide-slate-700">
-                </tbody>
-            </table>
+            </a>
         </div>
     </div>
 
-    <script>
-
-        const legalModal = document.getElementById('legalModal');
-        const acceptLegalBtn = document.getElementById('acceptLegalBtn');
-
-        acceptLegalBtn.addEventListener('click', () => {
-            legalModal.style.opacity = '0';
-            
-            setTimeout(() => {
-                legalModal.style.display = 'none';
-            }, 500);
-        });
-
-
-        const scanBtn = document.getElementById('scanBtn');
-        const statusText = document.getElementById('status');
-        const tableBody = document.getElementById('resultsTable');
-
-        scanBtn.addEventListener('click', async () => {
-            scanBtn.disabled = true;
-            scanBtn.classList.add('opacity-50', 'cursor-not-allowed');
-            statusText.innerHTML = '<span class="text-yellow-400 animate-pulse">Scanning the network... it may take some time...</span>';
-            tableBody.innerHTML = ''; 
-
-            try {
-                const response = await fetch('/api/scan');
-                const hosts = await response.json();
-
-                hosts.forEach(host => {
-                    let portsHtml = '<span class="text-slate-500">None</span>';
-                    if (host.open_ports && host.open_ports.length > 0) {
-                        portsHtml = host.open_ports.map(p => {
-                            const portNum = p.number || p; 
-                            const portSvc = p.service || '?';
-                            const portBanner = p.banner ? p.banner.trim() : ''; 
-
-                            if (portBanner) {
-                                return `
-                                    <span class="inline-flex items-center gap-1 bg-slate-900 px-2 py-1 rounded border border-blue-500 cursor-help transition-colors hover:bg-slate-800" title="${portBanner}">
-                                        <span class="text-blue-400 text-xs font-bold">${portNum}</span>
-                                        <span class="text-slate-400 text-[10px] uppercase">${portSvc}</span>
-                                    </span>
-                                `;
-                            } else {
-                                return `
-                                    <span class="inline-flex items-center gap-1 bg-slate-900 px-2 py-1 rounded border border-slate-700">
-                                        <span class="text-emerald-400 text-xs font-bold">${portNum}</span>
-                                        <span class="text-slate-500 text-[10px] uppercase">${portSvc}</span>
-                                    </span>
-                                `;
-                            }
-                        }).join(' ');
-                    }
-
-                    const row = document.createElement('tr');
-                    row.className = 'hover:bg-slate-750 transition-colors duration-150';
-                    row.innerHTML = `
-                        <td class="p-4 font-mono text-blue-400 font-semibold">${host.ip}</td>
-                        <td class="p-4 font-mono text-slate-400 text-sm">${host.mac || '-'}</td>
-                        <td class="p-4 text-slate-200 truncate" title="${host.vendor || '-'}">${host.vendor || '-'}</td>
-                        <td class="p-4 text-slate-200">${host.local_name || '-'}</td>
-                        <td class="p-4 text-amber-400 text-sm">${host.os || 'Unknown'}</td>
-                        <td class="p-4 space-x-1">${portsHtml}</td>
-                    `;
-                    tableBody.appendChild(row);
-                });
-
-                statusText.innerHTML = `<span class="text-emerald-400">Scan complete. Found ${hosts.length} devices.</span>`;
-            } catch (error) {
-                statusText.innerHTML = `<span class="text-red-500">Error occurred: ${error.message}</span>`;
-            } finally {
-                scanBtn.disabled = false;
-                scanBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-            }
-        });
-    </script>
 </body>
 </html>

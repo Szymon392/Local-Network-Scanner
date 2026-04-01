@@ -14,6 +14,14 @@ app = FastAPI(
 async def root():
     return FileResponse("frontend/index.html")
 
+@app.get("/scan.html")
+async def read_scan():
+    return FileResponse('frontend/scan.html')
+
+@app.get("/results.html")
+async def read_results():
+    return FileResponse('frontend/results.html')
+
 @app.get("/api/scan")
 async def scan_network():
 
