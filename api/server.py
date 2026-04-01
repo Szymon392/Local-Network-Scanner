@@ -4,6 +4,7 @@ from fastapi.responses import FileResponse
 from scanner.models import TargetHost, PortInfo
 from scanner import core
 from scanner import utils
+from ai.agent import NetworkSecurityAgent
 
 import asyncio
 
@@ -17,6 +18,8 @@ app = FastAPI(
     title = "Local Network Scanner API",
     description = ""
 )
+
+live_hosts = []  # Global variable to store live hosts data for AI analysis
 
 @app.get("/")
 async def root():
@@ -32,6 +35,8 @@ async def read_results():
 
 @app.get("/api/scan")
 async def scan_network():
+
+    global live_hosts
 
     network_cidr = utils.get_network_cidr()
 
@@ -50,17 +55,19 @@ async def scan_network():
 @app.websocket("/ws/chat")
 async def websocket_chat(websocket: WebSocket):
     await websocket.accept()
-    
+
+    global live_hosts
+
+    agent = NetworkSecurityAgent()
+
     try:
         while True:
             question = await websocket.receive_text()
 
+            if not question:
+                continue
 
-            # a place for AI integration logic
-            await asyncio.sleep(1.5) 
-            answer = f"Your question is: {question}   For now, no google ADK integration was implemented"
-
-
+            answer = await agent.analyze_query(question, live_hosts)
 
             await websocket.send_text(answer)
             
