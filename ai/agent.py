@@ -33,20 +33,17 @@ class NetworkSecurityAgent:
         try:
             response = await self.runner.run_debug(prompt)
             
-            # Tworzymy pustą listę na fragmenty tekstu
             text_parts = []
             
-            # Przeszukujemy "cebulową" strukturę obiektu Event
             for event in response:
                 if hasattr(event, 'content') and hasattr(event.content, 'parts'):
                     for part in event.content.parts:
                         if hasattr(part, 'text') and part.text:
                             text_parts.append(part.text)
             
-            # Łączymy wszystko w jeden czysty tekst
             final_answer = "".join(text_parts).strip()
             
-            return final_answer if final_answer else "AI nie zwróciło żadnej treści."
+            return final_answer if final_answer else "AI did not return a valid answer."
             
         except Exception as e:
-            return f"⚠️ Błąd podczas wyciągania tekstu: {str(e)}"
+            return "Error during AI analysis: " + str(e)

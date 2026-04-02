@@ -24,15 +24,17 @@ to make a minimalistic frontend - despite that the logic of what i had may seem 
                 <h2 class="text-lg font-bold text-white">AI Network Assistant</h2>
             </div>
             
-            <div class="p-4">
-                <div id="aiResponse" class="mb-4 p-4 bg-slate-900 rounded-lg border border-slate-700 text-slate-300 min-h-[50px] hidden text-sm leading-relaxed shadow-inner"></div>
+<div class="p-4">
+                <div id="aiResponse" 
+                    class="mb-4 p-4 bg-slate-900 rounded-lg border border-slate-700 text-slate-300 min-h-[50px] max-h-96 overflow-y-auto hidden flex-col gap-3 text-sm leading-relaxed shadow-inner"
+                    style="scrollbar-width: thin; scrollbar-color: #475569 #1e293b;"> </div>
 
-                <div class="flex gap-3">
+                <div class="flex gap-3 items-end">
                     <textarea id="chatInput" 
-                        class="flex-1 bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all resize-none placeholder:text-slate-500"
-                        placeholder="E.g., Which devices are most vulnerable?"
+                        class="flex-1 bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all resize-none placeholder:text-slate-500 overflow-hidden"
+                        style="scrollbar-width: thin; scrollbar-color: #475569 #1e293b;" placeholder="E.g., Which devices are most vulnerable?"
                         rows="1"></textarea>
-                    <button id="askBtn" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 py-2 rounded-lg shadow transition-all active:scale-95 flex items-center justify-center disabled:bg-slate-700 text-sm">
+                    <button id="askBtn" class="h-[42px] bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 py-2 rounded-lg shadow transition-all active:scale-95 flex items-center justify-center disabled:bg-slate-700 text-sm">
                         Ask AI
                     </button>
                 </div>
@@ -124,14 +126,28 @@ to make a minimalistic frontend - despite that the logic of what i had may seem 
         let aiSocket = new WebSocket(wsUrl);
 
         aiSocket.onmessage = (event) => {
-            const answer = event.data;
-            aiResponse.innerHTML = `<div class="text-blue-400 font-bold text-[10px] uppercase mb-1">AI Analyst:</div><div class="text-slate-300 text-sm">${answer}</div>`;
+            const answer = event.data.replace(/\n/g, '<br>');
+            
+            const indicator = document.getElementById('thinkingIndicator');
+            if (indicator) indicator.remove();
+
+            const aiBubble = document.createElement('div');
+            aiBubble.className = 'bg-slate-800 p-3 rounded-lg border border-slate-600 self-start mr-8';
+            aiBubble.innerHTML = `<div class="text-blue-400 font-bold text-[10px] uppercase mb-1">AI Analyst:</div><div class="text-slate-300 text-sm">${answer}</div>`;
+            aiResponse.appendChild(aiBubble);
+            
+            aiResponse.scrollTop = aiResponse.scrollHeight;
             askBtn.disabled = false;
         };
 
         aiSocket.onclose = () => {
             aiResponse.classList.remove('hidden');
-            aiResponse.innerHTML = `<span class="text-red-500 text-xs italic">System disconnected from AI Engine. Refresh page to reconnect.</span>`;
+            aiResponse.classList.add('flex');
+            
+            const errorBubble = document.createElement('div');
+            errorBubble.innerHTML = `<span class="text-red-500 text-xs italic">System disconnected from AI Engine. Refresh page to reconnect.</span>`;
+            aiResponse.appendChild(errorBubble);
+            
             askBtn.disabled = true;
         };
 
@@ -142,12 +158,38 @@ to make a minimalistic frontend - despite that the logic of what i had may seem 
             if (aiSocket.readyState === WebSocket.OPEN) {
                 askBtn.disabled = true;
                 aiResponse.classList.remove('hidden');
-                aiResponse.innerHTML = '<span class="text-blue-400 animate-pulse font-mono text-xs uppercase tracking-widest">Thinking...</span>';
+                aiResponse.classList.add('flex');
+
+                const userBubble = document.createElement('div');
+                userBubble.className = 'bg-blue-900 p-3 rounded-lg border border-blue-700 self-end ml-8';
+                userBubble.innerHTML = `<div class="text-blue-300 font-bold text-[10px] uppercase mb-1">You:</div><div class="text-white text-sm">${question}</div>`;
+                aiResponse.appendChild(userBubble);
+
+                const thinkingBubble = document.createElement('div');
+                thinkingBubble.id = 'thinkingIndicator';
+                thinkingBubble.className = 'text-blue-400 animate-pulse font-mono text-xs uppercase tracking-widest self-start mt-2';
+                thinkingBubble.innerText = 'Thinking...';
+                aiResponse.appendChild(thinkingBubble);
+
+                aiResponse.scrollTop = aiResponse.scrollHeight;
 
                 aiSocket.send(question);
                 chatInput.value = '';
+                chatInput.style.height = 'auto';
             } else {
                 alert("Connection to AI is currently down.");
+            }
+        });
+
+        chatInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            const maxHeight = 120;
+            if (this.scrollHeight <= maxHeight) {
+                this.style.height = this.scrollHeight + 'px';
+                this.style.overflowY = 'hidden';
+            } else {
+                this.style.height = maxHeight + 'px';
+                this.style.overflowY = 'auto';
             }
         });
 
