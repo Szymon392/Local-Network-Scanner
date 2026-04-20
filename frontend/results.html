@@ -72,7 +72,12 @@ to make a minimalistic frontend - despite that the logic of what i had may seem 
             
             try {
                 const response = await fetch('/api/scan');
-                if (!response.ok) throw new Error(`Server returned ${response.status}`);
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail); 
+                }
+                
                 const hosts = await response.json();
 
                 hosts.forEach(host => {

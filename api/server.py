@@ -1,4 +1,4 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse
 
 from scanner.models import TargetHost, PortInfo
@@ -21,6 +21,8 @@ app = FastAPI(
 
 live_hosts = []  # Global variable to store live hosts data for AI analysis
 
+is_scanning = False  # Flag to indicate if a scan is currently in progress
+
 @app.get("/")
 async def root():
     return FileResponse("frontend/index.html")
@@ -37,6 +39,12 @@ async def read_results():
 async def scan_network():
 
     global live_hosts
+    global is_scanning
+
+    if is_scanning: # performing double scan makes everything freeze as windows has a 512 reached hosts limit
+        raise HTTPException(status_code=409, detail="A scan is already in progress. Please wait for it to complete before starting a new one.")
+    
+    is_scanning = True
 
     network_cidr = utils.get_network_cidr()
 
@@ -50,6 +58,9 @@ async def scan_network():
 
     for host in live_hosts:
         host.os = host.guess_os()
+    
+    is_scanning = False
+
     return live_hosts
 
 @app.websocket("/ws/chat")
