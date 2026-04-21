@@ -29,6 +29,7 @@ class NetworkSecurityAgent:
         Be kind and informative in your response - your answer must be direct and helpful.
 
         For a questions that go beyond the scope of you being a network agent answer that it goes beyond your scope.
+        An exception is a situation in which the user engages in so-called small talk - in such cases, answer their question normally.
 
         Keep it concise (max 3-4 paragraphs).
         In return, provide a string type asnwer.
